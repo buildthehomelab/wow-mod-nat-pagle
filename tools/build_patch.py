@@ -471,7 +471,6 @@ def build_sql():
     w("")
 
     w("-- The dailies.")
-    ids = ", ".join(map(str, quest_ids))
     for table in ("quest_template", "quest_template_addon", "quest_request_items", "quest_offer_reward"):
         w("DELETE FROM `%s` WHERE `ID` BETWEEN %d AND %d;" % (table, FIRST_ID, LAST_ID))
     w("DELETE FROM `creature_queststarter` WHERE `quest` BETWEEN %d AND %d;" % (FIRST_ID, LAST_ID))

@@ -1,0 +1,17 @@
+[worldserver]
+
+########################################
+# mod-nat-pagle
+#
+# Nat Pagle's fishing dailies and The Anglers reputation. The dailies, the reputation and his
+# wares are world SQL; this file only sets the coins he pays.
+########################################
+
+#
+#    NatPagle.Coins
+#        Description: Coins added to the account wallet of mod-boss-coins for each daily handed
+#                     in. 0 pays none. Without mod-boss-coins this does nothing.
+#        Default:     1
+#
+
+NatPagle.Coins = 1

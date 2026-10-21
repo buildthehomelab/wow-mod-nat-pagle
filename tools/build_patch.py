@@ -12,8 +12,8 @@ The dailies come in three pools, one per era, and each pool offers one of its da
 (pool_template max_limit 1, the same way Old Man Barlo's and Marcia Chase's dailies rotate).
 With mod-individual-progression the Outland pool needs progression state 8 (rewarded quest
 66008) and the Northrend pool state 13 (66013), so a character sees one daily a day per era they
-have reached. Without that module only the Azeroth pool shows; drop the quest conditions to
-open them all. Each daily asks for fish (or junk) that only bites in one zone while the quest is
+have reached. Without that module those quests don't exist, the core skips the conditions that
+name them, and all three pools are open. Each daily asks for fish (or junk) that only bites in one zone while the quest is
 in your log (fishing_loot_template rows with QuestRequired, on the zone and on each of its areas
 that has a fishing table of its own, because the core looks at the area first).
 

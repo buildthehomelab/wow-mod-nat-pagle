@@ -30,8 +30,9 @@ Extreme Angler FC-5000, the Lucky Fishing Hat or Nat Pagle's Extreme Anglin' Boo
 
 The Outland pool shows only from progression state 8 (rewarded quest 66008) and the Northrend
 pool from state 13 (66013), so a character sees one daily a day for each era they have reached.
-Without that module nobody has those quests and only the Azeroth pool shows. To open all three,
-delete the module's `conditions` rows with `SourceTypeOrReferenceId` 19.
+The same gates hold back the Weather-Beaten Fishing Hat and Nat's Lucky Fishing Pole. Without
+that module the two quests don't exist, the core skips the conditions that name them (with an
+error line in the log at startup), and all three pools and both items are open to everyone.
 
 ## The Anglers
 
@@ -46,8 +47,10 @@ A new reputation under Classic in the reputation pane. Nat sells by rank:
 
 Fishy, Tiny Goldfish and the Azure Water Strider are items of
 [mod-retail-collection](https://github.com/buildthehomelab/wow-mod-retail-collection) (400449,
-410847, 410652); Nat only sells them when the server has them. Items you haven't the rank for
-don't show. Nat keeps his stock Mudskunk Lure.
+410847, 410652); Nat only sells them when the server has them at the moment this module's SQL
+is applied, so install mod-retail-collection first. Those three and Nat's Lucky Fishing Pole have
+no price: the reputation is what they cost. Items you haven't the rank for don't show. Nat keeps
+his stock Mudskunk Lure.
 
 ## Account wallet coins
 

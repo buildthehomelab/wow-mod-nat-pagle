@@ -41,6 +41,15 @@ namespace NatPagle
             if (!coins || !BossCoins::IsRealPlayer(player))
                 return;
 
+            // A Self-Found character can't reach the account wallet, so the coins go in its bags.
+            if (BossCoins::IsSelfFound(player->GetGUID().GetCounter()))
+            {
+                ChatHandler(player->GetSession()).SendSysMessage(Acore::StringFormat(
+                    "Nat Pagle slips you {} {}.", coins, BossCoins::CoinName(coins)));
+                BossCoins::GiveCoinsToBags(player, coins);
+                return;
+            }
+
             uint32 balance = 0;
             uint32 added = BossCoins::Wallet::Add(player->GetSession()->GetAccountId(), player->GetGUID().GetCounter(),
                 coins, "fishing", 0, nullptr, &balance);

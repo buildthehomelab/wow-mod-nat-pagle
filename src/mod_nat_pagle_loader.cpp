@@ -9,8 +9,10 @@
  */
 
 void AddNatPagleScripts();
+void AddNatPagleDerbyScripts();
 
 void Addmod_nat_pagleScripts()
 {
     AddNatPagleScripts();
+    AddNatPagleDerbyScripts();
 }

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""mod-nat-pagle's data: Nat Pagle's fishing dailies, the Anglers reputation and what Nat sells,
-written out as the module's world SQL and as the rows your client's spell patch needs.
+"""mod-nat-pagle's data: Nat Pagle's fishing dailies, the Anglers reputation, what Nat sells and the
+Stranglethorn fishing contest, written out as the module's world SQL and as the rows your client's
+spell patch needs.
 
     python3 build_patch.py --sql ../data/sql/db-world/mod_nat_pagle_world.sql
     python3 build_patch.py --patch patch-z80-spells-and-items.MPQ --client /path/to/client \\
@@ -21,11 +22,17 @@ Rewards: Nat's Tackle Box (Azeroth), Old Man Barlo's Bag of Fishing Treasures (O
 Marcia Chase's (Northrend), and reputation with The Anglers, a new faction under Classic. The
 module's C++ adds coins to mod-boss-coins' account wallet when that module is built in too.
 
+The Stranglethorn fishing contest keeps its stock quests and NPCs. Master Angler (8193) becomes a
+weekly quest open to everyone with 40 Speckled Tastyfish, and pays an Extravagant Extravaganza
+Coin on top of a choice of the stock prizes or two more coins. Riggle Bassbait and Nat Pagle sell
+what the coins buy (SHOP). src/NatPagleDerby.cpp replaces Riggle's stock script.
+
 --patch is the patch that carries your realm's Item.dbc. A patch MPQ replaces whole files, so the
-new rows go into its copy of Item.dbc (the tackle box and the quest items, so they have their
-icons) and Faction.dbc (The Anglers); every other file is copied unchanged. When the patch has no
-Faction.dbc yet, the client's own (--client, newest enUS locale patch) is the base. Rows are put
-in id order, as both files already are. Running it again on its own output changes nothing.
+new rows go into its copies of Item.dbc (the new items, so they have their icons), Faction.dbc
+(The Anglers), Spell.dbc (the Surfer Shoes' spell) and ItemExtendedCost.dbc (the coin prices);
+every other file is copied unchanged. When the patch doesn't have one of those files yet, the
+client's own (--client, newest enUS locale patch) is the base. New rows go in by id and old rows
+keep their order. Running it again on its own output changes nothing.
 Needs Python 3 and StormLib (`STORMLIB`, default /usr/local/lib/libstorm.dylib).
 """
 
@@ -222,15 +229,110 @@ TACKLE_BOX_LOOT = [
     (19969, 1, 0, 1, 1),        # Nat Pagle's Extreme Anglin' Boots
 ]
 
-ITEM_CLASS_QUEST, ITEM_CLASS_MISC = 12, 15
+ITEM_CLASS_ARMOR, ITEM_CLASS_QUEST, ITEM_CLASS_MISC = 4, 12, 15
+ITEM_SUBCLASS_CLOTH = 1
+INVTYPE_FEET = 8
 BONDING_PICKUP, BONDING_QUEST = 1, 4
 TACKLE_BOX_DISPLAY, TACKLE_BOX_MATERIAL = 9822, 2     # the Waterlogged Crate's
 ITEM_FLAG_HAS_LOOT = 0x4
+
+# The Stranglethorn fishing contest. The creature_text, npc_text and quest ids are stock unless
+# they fall in this module's range.
+RIGGLE = 15077
+QUEST_MASTER_ANGLER, QUEST_APPRENTICE_ANGLER = 8193, 8194
+QUEST_FLAGS_WEEKLY = 0x8000
+NPC_FLAG_VENDOR = 0x80
+WORLD_STATE_HAS_WINNER = 198       # the stock script's; only quest 8194 reads it
+DERBY_COIN, SURFER_SHOES = 9503720, 9503721
+COIN_DISPLAY, COIN_MATERIAL = 55217, 4                # the Dalaran fountain's gold coins
+SHOES_DISPLAY, SHOES_MATERIAL = 63888, 7              # Boots of the Bay's
+TEXT_MORE_WINNERS = 9503720
+SURF_SPELL = 90470
+WINNER_REP = 500
+TIME_TURN_INS = "before 5pm"
+
+# What the coins buy, from Riggle on contest days and from Nat all week:
+# (item, coins, progression quest or None).
+SHOP = [
+    (SURFER_SHOES, 8, None),
+    (19979, 3, None),               # Hook of the Master Angler
+    (50287, 4, IP_NORTHREND),       # Boots of the Bay
+    (33816, 3, IP_OUTLAND),         # Toothy's Bucket
+    (35349, 3, IP_OUTLAND),         # Snarly's Bucket
+]
+# ItemExtendedCost ids, one per price.
+COSTS = {3: 90434, 4: 90435, 8: 90436}
+NAT_SHOP_FIRST_SLOT = 21            # after his reputation wares
+
+MASTER_ANGLER_TEXT = (
+    "Today between 2pm and 4pm schools of Tastyfish will appear along the coast of Stranglethorn. Bring me 40 "
+    "Speckled Tastyfish %s and you are a Master Angler! Everyone who makes it wins a prize, and the first three "
+    "get extra Extravagant Extravaganza Coins on top.$b$bOne win a week, friend. If you can't reach 40, my "
+    "apprentice here will still pay you for each 5 Tastyfish you bring her.$b$bOh, and don't delay, Tastyfish "
+    "go bad quickly!" % TIME_TURN_INS)
+APPRENTICE_TEXT = "Forty is a lot of fish. I will buy your Tastyfish from you at a reasonable price, five at a time. Whadda ya say!"
+MORE_WINNERS_TEXT = (
+    "We have our first Master Angler this week, but this contest has room for more! Bring me 40 Speckled Tastyfish "
+    "%s and you win a prize too.$B$BCoins burning a hole in your pocket? Have a look at what I've got." % TIME_TURN_INS)
+SAY_SECOND = "$n takes SECOND PLACE! Keep those Tastyfish coming, there is a prize for every Master Angler!"
+SAY_THIRD = "$n takes THIRD PLACE! The podium is full, but there is still a prize for every Master Angler!"
+
+SURF_NAME = "Surfing"
+SURF_DESCRIPTION = "Allows you to walk across water for $d.  Any damage will cancel the effect."
+SURF_AURA = "Walking on water."
+
+# Spell.dbc: the fields the Surfer Shoes' spell sets. Shaman's Water Walking (546), cast on yourself,
+# with nothing to pay, in any form and on a mount. Stock Water Walking from an elixir (11319) would
+# take the guardian elixir slot.
+F_ATTRIBUTES, F_CAST_TIME, F_AURA_INTERRUPT, F_PROC_CHANCE, F_DURATION, F_RANGE = 4, 28, 32, 35, 40, 46
+F_EQUIPPED_CLASS, F_EFFECT, F_DIE_SIDES, F_BASE_POINTS, F_TARGET_A, F_AURA = 68, 71, 74, 80, 86, 95
+F_VISUAL, F_ICON = 131, 133
+F_NAME, F_NAME_MASK, F_RANK_MASK, F_DESCRIPTION, F_DESCRIPTION_MASK, F_AURA_TEXT, F_AURA_TEXT_MASK = 136, 152, 169, 170, 186, 187, 203
+F_GCD_CATEGORY, F_GCD, F_DAMAGE_CLASS, F_PREVENTION, F_MULTIPLIER, F_SCHOOL_MASK = 205, 206, 213, 214, 216, 225
+SPELL_FIELDS = 234
+SPELL_ATTR0_ALLOW_WHILE_MOUNTED = 0x01000000
+AURA_INTERRUPT_TAKE_DAMAGE = 0x2
+SPELL_EFFECT_APPLY_AURA, TARGET_UNIT_CASTER, SPELL_AURA_WATER_WALK = 6, 1, 104
+FLOAT_ONE = 0x3F800000
+SPELL_STRING_FIELDS = set(range(136, 152)) | set(range(153, 169)) | set(range(170, 186)) | set(range(187, 203))
+SPELL_FLOAT_FIELDS = {47, 77, 78, 79, 101, 102, 103, 119, 120, 121, 216, 217, 218, 229, 230, 231}
+# Plain `int` columns of AC's spell_dbc; every other integer column is unsigned.
+SPELL_SIGNED_FIELDS = {0, 13, 15, 41, *range(52, 71), 74, 75, 76, 80, 81, 82, *range(110, 116), 224, 228}
+
+
+def surf_spell_row():
+    """The spell's row with its text fields still zero: the callers add the strings."""
+    row = [0] * SPELL_FIELDS
+    row[0] = SURF_SPELL
+    row[F_ATTRIBUTES] = SPELL_ATTR0_ALLOW_WHILE_MOUNTED
+    row[F_CAST_TIME] = 1
+    row[F_AURA_INTERRUPT] = AURA_INTERRUPT_TAKE_DAMAGE
+    row[F_PROC_CHANCE] = 101
+    row[F_DURATION] = 6                 # ten minutes, like 546
+    row[F_RANGE] = 1                    # self
+    row[F_EQUIPPED_CLASS] = 0xFFFFFFFF
+    row[F_EFFECT] = SPELL_EFFECT_APPLY_AURA
+    row[F_DIE_SIDES] = 1
+    row[F_BASE_POINTS] = 0xFFFFFFFF
+    row[F_TARGET_A] = TARGET_UNIT_CASTER
+    row[F_AURA] = SPELL_AURA_WATER_WALK
+    row[F_VISUAL], row[F_ICON] = 4483, 101
+    row[F_NAME_MASK] = NAME_MASK
+    row[F_RANK_MASK] = 16712172
+    row[F_DESCRIPTION_MASK] = row[F_AURA_TEXT_MASK] = 16712188
+    row[F_GCD_CATEGORY], row[F_GCD] = 133, 1500
+    row[F_DAMAGE_CLASS], row[F_PREVENTION] = 1, 1
+    row[F_MULTIPLIER:F_MULTIPLIER + 3] = [FLOAT_ONE] * 3
+    row[F_SCHOOL_MASK] = 8              # nature
+    return row
+
 
 # Item.dbc rows: (id, class, subclass, material, display, inventory type, sheath).
 def item_rows():
     rows = [(TACKLE_BOX, ITEM_CLASS_MISC, 0, TACKLE_BOX_MATERIAL, TACKLE_BOX_DISPLAY, 0, 0)]
     rows += [(d["id"], ITEM_CLASS_QUEST, 0, -1, d["display"], 0, 0) for d in DAILIES]
+    rows.append((DERBY_COIN, ITEM_CLASS_MISC, 0, COIN_MATERIAL, COIN_DISPLAY, 0, 0))
+    rows.append((SURFER_SHOES, ITEM_CLASS_ARMOR, ITEM_SUBCLASS_CLOTH, SHOES_MATERIAL, SHOES_DISPLAY, INVTYPE_FEET, 0))
     return rows
 
 
@@ -258,9 +360,9 @@ def put_rows(rows, new):
     """The rows with `new` in place of rows of the same id, the rest in id order among them. The
     old rows keep their order: the client reads some DBCs in file order, so re-sorting one can
     break it."""
-    ids = {r[0] for r in new}
-    rows = [r for r in rows if r[0] not in ids]
-    for row in sorted(new, key=lambda r: r[0]):
+    by_id = {r[0]: r for r in new}
+    rows = [by_id.pop(r[0], r) for r in rows]
+    for row in sorted(by_id.values(), key=lambda r: r[0]):
         at = len(rows)
         while at > 0 and rows[at - 1][0] > row[0]:
             at -= 1
@@ -352,8 +454,8 @@ def pack(out, files):
 LOCALE_MPQS = ["patch-enUS-3.MPQ", "patch-enUS-2.MPQ", "patch-enUS.MPQ", "locale-enUS.MPQ"]
 
 
-def client_faction_dbc(client, out):
-    """The client's own Faction.dbc: from its newest enUS locale patch."""
+def client_dbc(client, name, out):
+    """The client's own copy of a DBC: from its newest enUS locale patch."""
     lib, H = stormlib()
     for mpq in LOCALE_MPQS:
         archive = os.path.join(client, "Data", "enUS", mpq)
@@ -362,11 +464,11 @@ def client_faction_dbc(client, out):
         h = H()
         if not lib.SFileOpenArchive(archive.encode(), 0, 0x100, ctypes.byref(h)):
             continue
-        ok = lib.SFileExtractFile(h, b"DBFilesClient\\Faction.dbc", out.encode(), 0)
+        ok = lib.SFileExtractFile(h, ("DBFilesClient\\%s" % name).encode(), out.encode(), 0)
         lib.SFileCloseArchive(h)
         if ok:
             return out
-    sys.exit("no Faction.dbc in %s/Data/enUS" % client)
+    sys.exit("no %s in %s/Data/enUS" % (name, client))
 
 
 # --- the client rows ---------------------------------------------------------------------------
@@ -409,6 +511,40 @@ def patch_faction(path):
     row[56] = NAME_MASK
     write_dbc(path, put_rows(rows, [row]), strings, fields)
     print("Faction.dbc %d %s" % (FACTION, FACTION_NAME))
+
+
+def patch_spell(path):
+    rows, strings, fields = read_dbc(path)
+    if fields != SPELL_FIELDS:
+        sys.exit("Spell.dbc has %d fields, not %d" % (fields, SPELL_FIELDS))
+    old = next((r for r in rows if r[0] == SURF_SPELL), None)
+    if old and string_at(strings, old[F_NAME]) != SURF_NAME:
+        sys.exit("Spell.dbc row %d is taken by %r" % (SURF_SPELL, string_at(strings, old[F_NAME])))
+    row = surf_spell_row()
+    row[F_NAME] = add_string(strings, SURF_NAME)
+    row[F_DESCRIPTION] = add_string(strings, SURF_DESCRIPTION)
+    row[F_AURA_TEXT] = add_string(strings, SURF_AURA)
+    write_dbc(path, put_rows(rows, [row]), strings, fields)
+    print("Spell.dbc %d %s" % (SURF_SPELL, SURF_NAME))
+
+
+COST_FIELDS, COST_ITEM, COST_COUNT = 16, 4, 9
+
+
+def patch_costs(path):
+    rows, strings, fields = read_dbc(path)
+    if fields != COST_FIELDS:
+        sys.exit("ItemExtendedCost.dbc has %d fields, not %d" % (fields, COST_FIELDS))
+    new = []
+    for coins, cost in sorted(COSTS.items()):
+        old = next((r for r in rows if r[0] == cost), None)
+        if old and old[COST_ITEM] != DERBY_COIN:
+            sys.exit("ItemExtendedCost.dbc row %d is taken: it costs item %d" % (cost, old[COST_ITEM]))
+        row = [0] * COST_FIELDS
+        row[0], row[COST_ITEM], row[COST_COUNT] = cost, DERBY_COIN, coins
+        new.append(row)
+    write_dbc(path, put_rows(rows, new), strings, fields)
+    print("ItemExtendedCost.dbc: %d rows (%d-%d)" % (len(new), new[0][0], new[-1][0]))
 
 
 # --- SQL ---------------------------------------------------------------------------------------
@@ -567,7 +703,103 @@ def build_sql():
 
     w("-- Nat pays the wallet coins (src/NatPagle.cpp).")
     w("UPDATE `creature_template` SET `ScriptName` = 'npc_nat_pagle' WHERE `entry` = %d;" % NAT_PAGLE)
+    w("")
+
+    build_derby_sql(w)
     return "\n".join(out) + "\n"
+
+
+def spell_sql_values():
+    def value(i, v):
+        if i in SPELL_STRING_FIELDS:
+            return "''"
+        if i in SPELL_FLOAT_FIELDS:
+            return "%g" % struct.unpack("<f", struct.pack("<I", v))[0]
+        return str(struct.unpack("<i", struct.pack("<I", v))[0] if i in SPELL_SIGNED_FIELDS else v)
+
+    values = [value(i, v) for i, v in enumerate(surf_spell_row())]
+    values[F_NAME] = q(SURF_NAME)
+    values[F_DESCRIPTION] = q(SURF_DESCRIPTION)
+    values[F_AURA_TEXT] = q(SURF_AURA)
+    return ", ".join(values)
+
+
+def build_derby_sql(w):
+    w("-- The Stranglethorn fishing contest: every character with 40 Tastyfish wins, once a week.")
+    w("UPDATE `creature_template` SET `ScriptName` = 'npc_riggle_derby', `npcflag` = `npcflag` | %d WHERE `entry` = %d;"
+      % (NPC_FLAG_VENDOR, RIGGLE))
+    w("UPDATE `quest_template` SET `Flags` = %d, `RewardItem1` = %d, `RewardAmount1` = 1, `RewardChoiceItemID3` = %d, "
+      "`RewardChoiceItemQuantity3` = 2, `RewardFactionID1` = %d, `RewardFactionOverride1` = %d WHERE `ID` = %d;"
+      % (QUEST_FLAGS_WEEKLY, DERBY_COIN, DERBY_COIN, FACTION, WINNER_REP * 100, QUEST_MASTER_ANGLER))
+    w("UPDATE `quest_request_items` SET `CompletionText` = %s WHERE `ID` = %d;" % (q(MASTER_ANGLER_TEXT), QUEST_MASTER_ANGLER))
+    w("")
+    w("-- Jang buys Tastyfish whether or not anyone has won, at his stock price.")
+    w("DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId` = 19 AND `SourceEntry` = %d "
+      "AND `ConditionTypeOrReference` = 11 AND `ConditionValue1` = %d;" % (QUEST_APPRENTICE_ANGLER, WORLD_STATE_HAS_WINNER))
+    w("UPDATE `quest_request_items` SET `CompletionText` = %s WHERE `ID` = %d;" % (q(APPRENTICE_TEXT), QUEST_APPRENTICE_ANGLER))
+    w("")
+    w("-- What Riggle says beyond the stock lines.")
+    w("DELETE FROM `npc_text` WHERE `ID` = %d;" % TEXT_MORE_WINNERS)
+    w("INSERT INTO `npc_text` (`ID`, `text0_0`, `text0_1`, `BroadcastTextID0`, `lang0`, `Probability0`) VALUES "
+      "(%d, %s, %s, 0, 0, 1);" % (TEXT_MORE_WINNERS, q(MORE_WINNERS_TEXT), q(MORE_WINNERS_TEXT)))
+    w("DELETE FROM `creature_text` WHERE `CreatureID` = %d AND `GroupID` IN (3, 4);" % RIGGLE)
+    w("INSERT INTO `creature_text` (`CreatureID`, `GroupID`, `ID`, `Text`, `Type`, `Language`, `Probability`, `Emote`, "
+      "`Duration`, `Sound`, `BroadcastTextId`, `TextRange`, `comment`) VALUES")
+    w(",\n".join("(%d, %d, 0, %s, 14, 0, 100, 0, 0, 0, 0, 2, 'Fishing Extravaganza')" % (RIGGLE, group, q(text))
+                 for group, text in ((3, SAY_SECOND), (4, SAY_THIRD))) + ";")
+    w("")
+    w("-- The coin and the Surfer Shoes (the client gets the same rows in its Item.dbc).")
+    w("INSERT INTO `item_template` (`entry`, `class`, `subclass`, `SoundOverrideSubclass`, `name`, `displayid`, `Quality`, "
+      "`BuyCount`, `AllowableClass`, `AllowableRace`, `InventoryType`, `ItemLevel`, `maxcount`, `stackable`, `bonding`, "
+      "`description`, `Material`, `RequiredDisenchantSkill`, `spellid_1`, `spelltrigger_1`, `spellcooldown_1`, "
+      "`spellcategorycooldown_1`, `spellcooldown_2`, `spellcategorycooldown_2`, `spellcooldown_3`, "
+      "`spellcategorycooldown_3`, `spellcooldown_4`, `spellcategorycooldown_4`, `spellcooldown_5`, "
+      "`spellcategorycooldown_5`) VALUES")
+    cooldowns = ", ".join(["-1"] * 10)
+    w("(%d, %d, 0, -1, %s, %d, 2, 1, -1, -1, 0, 45, 0, 250, %d, %s, %d, -1, 0, 0, %s),"
+      % (DERBY_COIN, ITEM_CLASS_MISC, q("Extravagant Extravaganza Coin"), COIN_DISPLAY, BONDING_PICKUP,
+         q("Riggle Bassbait and Nat Pagle take these for fishing prizes."), COIN_MATERIAL, cooldowns))
+    w("(%d, %d, %d, -1, %s, %d, 3, 1, -1, -1, %d, 45, 1, 1, %d, %s, %d, -1, %d, 0, %s);"
+      % (SURFER_SHOES, ITEM_CLASS_ARMOR, ITEM_SUBCLASS_CLOTH, q("Surfer Shoes"), SHOES_DISPLAY, INVTYPE_FEET,
+         BONDING_PICKUP, q("Whatever you do, don't look down."), SHOES_MATERIAL, SURF_SPELL, cooldowns))
+    w("")
+    w("-- The Surfer Shoes' spell (the client gets the same row in its Spell.dbc).")
+    w("DELETE FROM `spell_dbc` WHERE `ID` = %d;" % SURF_SPELL)
+    w("INSERT INTO `spell_dbc` VALUES\n(%s);" % spell_sql_values())
+    w("")
+    w("-- The coin prices (the client gets the same rows in its ItemExtendedCost.dbc).")
+    cost_ids = sorted(COSTS.values())
+    w("DELETE FROM `itemextendedcost_dbc` WHERE `ID` BETWEEN %d AND %d;" % (cost_ids[0], cost_ids[-1]))
+    w("INSERT INTO `itemextendedcost_dbc` (`ID`, `HonorPoints`, `ArenaPoints`, `ArenaBracket`, `ItemID_1`, `ItemID_2`, "
+      "`ItemID_3`, `ItemID_4`, `ItemID_5`, `ItemCount_1`, `ItemCount_2`, `ItemCount_3`, `ItemCount_4`, `ItemCount_5`, "
+      "`RequiredArenaRating`, `ItemPurchaseGroup`) VALUES")
+    w(",\n".join("(%d, 0, 0, 0, %d, 0, 0, 0, 0, %d, 0, 0, 0, 0, 0, 0)" % (cost, DERBY_COIN, coins)
+                 for coins, cost in sorted(COSTS.items())) + ";")
+    w("")
+    shop_ids = ", ".join(str(item) for item, _, _ in SHOP)
+    w("-- The coin shop: Riggle on contest days, Nat all week. Outland and Northrend goods wait for")
+    w("-- mod-individual-progression's state quests.")
+    w("DELETE FROM `npc_vendor` WHERE `entry` IN (%d, %d) AND `item` IN (%s);" % (RIGGLE, NAT_PAGLE, shop_ids))
+    w("DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId` = 23 AND `SourceGroup` IN (%d, %d) AND `SourceEntry` IN (%s);"
+      % (RIGGLE, NAT_PAGLE, shop_ids))
+    w("INSERT INTO `npc_vendor` (`entry`, `slot`, `item`, `maxcount`, `incrtime`, `ExtendedCost`, `VerifiedBuild`) VALUES")
+    rows = []
+    for vendor, first_slot in ((RIGGLE, 1), (NAT_PAGLE, NAT_SHOP_FIRST_SLOT)):
+        for slot, (item, coins, _) in enumerate(SHOP, start=first_slot):
+            rows.append("(%d, %d, %d, 0, 0, %d, 0)" % (vendor, slot, item, COSTS[coins]))
+    w(",\n".join(rows) + ";")
+    w("INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry`, `SourceId`, `ElseGroup`, "
+      "`ConditionTypeOrReference`, `ConditionTarget`, `ConditionValue1`, `ConditionValue2`, `ConditionValue3`, "
+      "`NegativeCondition`, `ErrorType`, `ErrorTextId`, `ScriptName`, `Comment`) VALUES")
+    rows = []
+    for vendor in (RIGGLE, NAT_PAGLE):
+        for item, _, gate in SHOP:
+            if gate:
+                rows.append("(23, %d, %d, 0, 0, 8, 0, %d, 0, 0, 0, 0, 0, '', %s)" % (
+                    vendor, item, gate, q("Fishing coin shop sells %d from progression quest %d" % (item, gate))))
+    w(",\n".join(rows) + ";")
+
+
 
 
 def plural(name):
@@ -599,12 +831,14 @@ def main():
             if "DBFilesClient\\Item.dbc" not in files:
                 sys.exit("%s has no Item.dbc" % args.patch)
             patch_items(files["DBFilesClient\\Item.dbc"])
-            faction_name = "DBFilesClient\\Faction.dbc"
-            if faction_name not in files:
-                if not args.client:
-                    sys.exit("%s has no Faction.dbc: pass --client to start from the client's" % args.patch)
-                files[faction_name] = client_faction_dbc(args.client, os.path.join(tmp, "Faction.dbc"))
-            patch_faction(files[faction_name])
+            for dbc, patch_one in (("Faction.dbc", patch_faction), ("Spell.dbc", patch_spell),
+                                   ("ItemExtendedCost.dbc", patch_costs)):
+                name = "DBFilesClient\\" + dbc
+                if name not in files:
+                    if not args.client:
+                        sys.exit("%s has no %s: pass --client to start from the client's" % (args.patch, dbc))
+                    files[name] = client_dbc(args.client, dbc, os.path.join(tmp, dbc))
+                patch_one(files[name])
             pack(args.out, [(local, name) for name, local in sorted(files.items())])
             print("%s: %d files, %.1f MB" % (args.out, len(files), os.path.getsize(args.out) / 1e6))
 

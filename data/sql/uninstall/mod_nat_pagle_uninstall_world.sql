@@ -3,9 +3,29 @@
 -- db-world and db-characters folders.
 --
 -- Removes the dailies, their catches and pools, Nat's Tackle Box, The Anglers and what the module
--- added to Nat Pagle's wares; his stock Mudskunk Lure and stock quests stay. It also forgets that
--- the module's updates were applied, so installing the module again applies them again.
+-- added to Nat Pagle's wares; his stock Mudskunk Lure and stock quests stay. Puts the Stranglethorn
+-- fishing contest back to stock. It also forgets that the module's updates were applied, so
+-- installing the module again applies them again.
 -- Idempotent: safe to run again.
+
+UPDATE `creature_template` SET `ScriptName` = 'npc_riggle_bassbait', `npcflag` = `npcflag` & ~128 WHERE `entry` = 15077;
+UPDATE `quest_template` SET `Flags` = 0, `RewardItem1` = 0, `RewardAmount1` = 0, `RewardChoiceItemID3` = 0,
+    `RewardChoiceItemQuantity3` = 0, `RewardFactionID1` = 0, `RewardFactionOverride1` = 0 WHERE `ID` = 8193;
+UPDATE `quest_request_items` SET `CompletionText` = 'Today between 2pm and 4pm we have a contest to determine who the greatest angler of them all is! Just be the FIRST PERSON to bring me 40 Tastyfish fished from the Tastyfish schools found along the coast of Stranglethorn before anyone else does and you will be declared the Master Angler!$b$bIf you are not the first person to bring me 40 fish, my apprentice here will still reward you with money for each 5 Tastyfish you bring her.$b$bOh, and don\'t delay, Tastyfish go bad quickly!' WHERE `ID` = 8193;
+UPDATE `quest_request_items` SET `CompletionText` = 'Even though we already have a contest winner, I will still buy your Tastyfish from you at a reasonable price. Whadda ya say!' WHERE `ID` = 8194;
+DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId` = 19 AND `SourceEntry` = 8194
+    AND `ConditionTypeOrReference` = 11 AND `ConditionValue1` = 198;
+INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry`, `SourceId`, `ElseGroup`,
+    `ConditionTypeOrReference`, `ConditionTarget`, `ConditionValue1`, `ConditionValue2`, `ConditionValue3`,
+    `NegativeCondition`, `ErrorType`, `ErrorTextId`, `ScriptName`, `Comment`)
+VALUES (19, 0, 8194, 0, 0, 11, 0, 198, 1, 0, 0, 0, 0, '', 'Fishing Extravaganza - fishing event has a winner');
+DELETE FROM `npc_text` WHERE `ID` = 9503720;
+DELETE FROM `creature_text` WHERE `CreatureID` = 15077 AND `GroupID` IN (3, 4);
+DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId` = 23 AND `SourceGroup` IN (15077, 12919)
+    AND `SourceEntry` IN (9503721, 19979, 50287, 33816, 35349);
+DELETE FROM `npc_vendor` WHERE `entry` IN (15077, 12919) AND `item` IN (9503721, 19979, 50287, 33816, 35349);
+DELETE FROM `itemextendedcost_dbc` WHERE `ID` BETWEEN 90434 AND 90436;
+DELETE FROM `spell_dbc` WHERE `ID` = 90470;
 
 DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId` = 19 AND `SourceEntry` BETWEEN 9503700 AND 9503799;
 DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId` = 23 AND `SourceGroup` = 12919

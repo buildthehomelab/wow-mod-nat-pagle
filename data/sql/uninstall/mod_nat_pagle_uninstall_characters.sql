@@ -2,10 +2,13 @@
 -- removing the module (and after mod_nat_pagle_uninstall_world.sql).
 --
 -- Forgets The Anglers reputation, the dailies' quest log entries and history, and the pools'
--- picks, and removes the module's items (Nat's Tackle Box, the catches) from bags and banks.
+-- picks, and removes the module's items (Nat's Tackle Box, the catches, the contest's coin and
+-- Surfer Shoes) from bags and banks. Master Angler is a plain repeatable quest again, so this week's
+-- wins are forgotten too.
 -- Idempotent: safe to run again.
 
 DELETE FROM `character_reputation` WHERE `faction` = 1170;
+DELETE FROM `character_queststatus_weekly` WHERE `quest` = 8193;
 
 DELETE FROM `character_queststatus` WHERE `quest` BETWEEN 9503700 AND 9503799;
 DELETE FROM `character_queststatus_daily` WHERE `quest` BETWEEN 9503700 AND 9503799;

@@ -3,8 +3,8 @@
 ########################################
 # mod-nat-pagle
 #
-# Nat Pagle's fishing dailies and The Anglers reputation. The dailies, the reputation and his
-# wares are world SQL; this file only sets the coins he pays.
+# Nat Pagle's fishing dailies, The Anglers reputation and the Stranglethorn fishing contest. The
+# quests, the reputation and the wares are world SQL; this file only sets the coins paid.
 ########################################
 
 #
@@ -15,3 +15,20 @@
 #
 
 NatPagle.Coins = 1
+
+#
+#    NatPagle.Derby.FirstPlaceCoins
+#        Description: Extravagant Extravaganza Coins for the contest's first winner each week, on
+#                     top of what every winner gets. 0 pays none.
+#        Default:     2
+#
+
+NatPagle.Derby.FirstPlaceCoins = 2
+
+#
+#    NatPagle.Derby.RunnerUpCoins
+#        Description: The same bonus for the second and third winners. 0 pays none.
+#        Default:     1
+#
+
+NatPagle.Derby.RunnerUpCoins = 1

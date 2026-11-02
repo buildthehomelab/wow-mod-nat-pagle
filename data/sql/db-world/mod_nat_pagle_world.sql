@@ -307,3 +307,60 @@ JOIN `npc_vendor` v ON v.`entry` = 12919 AND v.`item` = c.`SourceEntry`;
 
 -- Nat pays the wallet coins (src/NatPagle.cpp).
 UPDATE `creature_template` SET `ScriptName` = 'npc_nat_pagle' WHERE `entry` = 12919;
+
+-- The Stranglethorn fishing contest: every character with 40 Tastyfish wins, once a week.
+UPDATE `creature_template` SET `ScriptName` = 'npc_riggle_derby', `npcflag` = `npcflag` | 128 WHERE `entry` = 15077;
+UPDATE `quest_template` SET `Flags` = 32768, `RewardItem1` = 9503720, `RewardAmount1` = 1, `RewardChoiceItemID3` = 9503720, `RewardChoiceItemQuantity3` = 2, `RewardFactionID1` = 1170, `RewardFactionOverride1` = 50000 WHERE `ID` = 8193;
+UPDATE `quest_request_items` SET `CompletionText` = 'Today between 2pm and 4pm schools of Tastyfish will appear along the coast of Stranglethorn. Bring me 40 Speckled Tastyfish before 5pm and you are a Master Angler! Everyone who makes it wins a prize, and the first three get extra Extravagant Extravaganza Coins on top.$b$bOne win a week, friend. If you can\'t reach 40, my apprentice here will still pay you for each 5 Tastyfish you bring her.$b$bOh, and don\'t delay, Tastyfish go bad quickly!' WHERE `ID` = 8193;
+
+-- Jang buys Tastyfish whether or not anyone has won, at his stock price.
+DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId` = 19 AND `SourceEntry` = 8194 AND `ConditionTypeOrReference` = 11 AND `ConditionValue1` = 198;
+UPDATE `quest_request_items` SET `CompletionText` = 'Forty is a lot of fish. I will buy your Tastyfish from you at a reasonable price, five at a time. Whadda ya say!' WHERE `ID` = 8194;
+
+-- What Riggle says beyond the stock lines.
+DELETE FROM `npc_text` WHERE `ID` = 9503720;
+INSERT INTO `npc_text` (`ID`, `text0_0`, `text0_1`, `BroadcastTextID0`, `lang0`, `Probability0`) VALUES (9503720, 'We have our first Master Angler this week, but this contest has room for more! Bring me 40 Speckled Tastyfish before 5pm and you win a prize too.$B$BCoins burning a hole in your pocket? Have a look at what I\'ve got.', 'We have our first Master Angler this week, but this contest has room for more! Bring me 40 Speckled Tastyfish before 5pm and you win a prize too.$B$BCoins burning a hole in your pocket? Have a look at what I\'ve got.', 0, 0, 1);
+DELETE FROM `creature_text` WHERE `CreatureID` = 15077 AND `GroupID` IN (3, 4);
+INSERT INTO `creature_text` (`CreatureID`, `GroupID`, `ID`, `Text`, `Type`, `Language`, `Probability`, `Emote`, `Duration`, `Sound`, `BroadcastTextId`, `TextRange`, `comment`) VALUES
+(15077, 3, 0, '$n takes SECOND PLACE! Keep those Tastyfish coming, there is a prize for every Master Angler!', 14, 0, 100, 0, 0, 0, 0, 2, 'Fishing Extravaganza'),
+(15077, 4, 0, '$n takes THIRD PLACE! The podium is full, but there is still a prize for every Master Angler!', 14, 0, 100, 0, 0, 0, 0, 2, 'Fishing Extravaganza');
+
+-- The coin and the Surfer Shoes (the client gets the same rows in its Item.dbc).
+INSERT INTO `item_template` (`entry`, `class`, `subclass`, `SoundOverrideSubclass`, `name`, `displayid`, `Quality`, `BuyCount`, `AllowableClass`, `AllowableRace`, `InventoryType`, `ItemLevel`, `maxcount`, `stackable`, `bonding`, `description`, `Material`, `RequiredDisenchantSkill`, `spellid_1`, `spelltrigger_1`, `spellcooldown_1`, `spellcategorycooldown_1`, `spellcooldown_2`, `spellcategorycooldown_2`, `spellcooldown_3`, `spellcategorycooldown_3`, `spellcooldown_4`, `spellcategorycooldown_4`, `spellcooldown_5`, `spellcategorycooldown_5`) VALUES
+(9503720, 15, 0, -1, 'Extravagant Extravaganza Coin', 55217, 2, 1, -1, -1, 0, 45, 0, 250, 1, 'Riggle Bassbait and Nat Pagle take these for fishing prizes.', 4, -1, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1),
+(9503721, 4, 1, -1, 'Surfer Shoes', 63888, 3, 1, -1, -1, 8, 45, 1, 1, 1, 'Whatever you do, don\'t look down.', 7, -1, 90470, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+
+-- The Surfer Shoes' spell (the client gets the same row in its Spell.dbc).
+DELETE FROM `spell_dbc` WHERE `ID` = 90470;
+INSERT INTO `spell_dbc` VALUES
+(90470, 0, 0, 0, 16777216, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 101, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 6, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 104, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4483, 0, 101, 0, 0, 'Surfing', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 16712190, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 16712172, 'Allows you to walk across water for $d.  Any damage will cancel the effect.', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 16712188, 'Walking on water.', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 16712188, 0, 133, 1500, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0);
+
+-- The coin prices (the client gets the same rows in its ItemExtendedCost.dbc).
+DELETE FROM `itemextendedcost_dbc` WHERE `ID` BETWEEN 90434 AND 90436;
+INSERT INTO `itemextendedcost_dbc` (`ID`, `HonorPoints`, `ArenaPoints`, `ArenaBracket`, `ItemID_1`, `ItemID_2`, `ItemID_3`, `ItemID_4`, `ItemID_5`, `ItemCount_1`, `ItemCount_2`, `ItemCount_3`, `ItemCount_4`, `ItemCount_5`, `RequiredArenaRating`, `ItemPurchaseGroup`) VALUES
+(90434, 0, 0, 0, 9503720, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0),
+(90435, 0, 0, 0, 9503720, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0),
+(90436, 0, 0, 0, 9503720, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0);
+
+-- The coin shop: Riggle on contest days, Nat all week. Outland and Northrend goods wait for
+-- mod-individual-progression's state quests.
+DELETE FROM `npc_vendor` WHERE `entry` IN (15077, 12919) AND `item` IN (9503721, 19979, 50287, 33816, 35349);
+DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId` = 23 AND `SourceGroup` IN (15077, 12919) AND `SourceEntry` IN (9503721, 19979, 50287, 33816, 35349);
+INSERT INTO `npc_vendor` (`entry`, `slot`, `item`, `maxcount`, `incrtime`, `ExtendedCost`, `VerifiedBuild`) VALUES
+(15077, 1, 9503721, 0, 0, 90436, 0),
+(15077, 2, 19979, 0, 0, 90434, 0),
+(15077, 3, 50287, 0, 0, 90435, 0),
+(15077, 4, 33816, 0, 0, 90434, 0),
+(15077, 5, 35349, 0, 0, 90434, 0),
+(12919, 21, 9503721, 0, 0, 90436, 0),
+(12919, 22, 19979, 0, 0, 90434, 0),
+(12919, 23, 50287, 0, 0, 90435, 0),
+(12919, 24, 33816, 0, 0, 90434, 0),
+(12919, 25, 35349, 0, 0, 90434, 0);
+INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry`, `SourceId`, `ElseGroup`, `ConditionTypeOrReference`, `ConditionTarget`, `ConditionValue1`, `ConditionValue2`, `ConditionValue3`, `NegativeCondition`, `ErrorType`, `ErrorTextId`, `ScriptName`, `Comment`) VALUES
+(23, 15077, 50287, 0, 0, 8, 0, 66013, 0, 0, 0, 0, 0, '', 'Fishing coin shop sells 50287 from progression quest 66013'),
+(23, 15077, 33816, 0, 0, 8, 0, 66008, 0, 0, 0, 0, 0, '', 'Fishing coin shop sells 33816 from progression quest 66008'),
+(23, 15077, 35349, 0, 0, 8, 0, 66008, 0, 0, 0, 0, 0, '', 'Fishing coin shop sells 35349 from progression quest 66008'),
+(23, 12919, 50287, 0, 0, 8, 0, 66013, 0, 0, 0, 0, 0, '', 'Fishing coin shop sells 50287 from progression quest 66013'),
+(23, 12919, 33816, 0, 0, 8, 0, 66008, 0, 0, 0, 0, 0, '', 'Fishing coin shop sells 33816 from progression quest 66008'),
+(23, 12919, 35349, 0, 0, 8, 0, 66008, 0, 0, 0, 0, 0, '', 'Fishing coin shop sells 35349 from progression quest 66008');

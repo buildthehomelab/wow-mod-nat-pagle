@@ -32,6 +32,7 @@ DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId` = 23 AND `SourceGroup` 
     AND `SourceEntry` IN (6533, 6532, 19971, 19972, 19969, 19022, 33820, 45858, 410847, 410652, 19970, 400449);
 DELETE FROM `npc_vendor` WHERE `entry` = 12919
     AND `item` IN (6533, 6532, 19971, 19972, 19969, 19022, 33820, 45858, 410847, 410652, 19970, 400449);
+DELETE FROM `gossip_menu_option` WHERE `MenuID` = 6445 AND `OptionID` = 1;
 
 DELETE FROM `fishing_loot_template` WHERE `Item` BETWEEN 9503700 AND 9503799;
 DELETE FROM `pool_quest` WHERE `pool_entry` IN (9503700, 9503701, 9503702);

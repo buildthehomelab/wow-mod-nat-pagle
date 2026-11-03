@@ -44,6 +44,7 @@ import sys
 import tempfile
 
 NAT_PAGLE = 12919                   # creature_template, stock: his isle off Dustwallow Marsh
+NAT_PAGLE_MENU = 6445               # his stock gossip menu; option 0 is the Gahz'ranka one
 TACKLE_BOX = 9503700
 POOL_AZEROTH, POOL_OUTLAND, POOL_NORTHREND = 9503700, 9503701, 9503702
 FIRST_ID, LAST_ID = 9503700, 9503799
@@ -699,6 +700,15 @@ def build_sql():
     w("INSERT INTO `conditions` (%s)" % ", ".join("`%s`" % c for c in columns))
     w("SELECT c.* FROM (\n  " + "\n  UNION ALL ".join(selects) + "\n) c")
     w("JOIN `npc_vendor` v ON v.`entry` = %d AND v.`item` = c.`SourceEntry`;" % NAT_PAGLE)
+    w("")
+
+    w("-- His stock menu has no way to the wares, and its one option keeps the core from falling back on")
+    w("-- the default menu's. The client opens a lone vendor option by itself, without the greeting.")
+    w("DELETE FROM `gossip_menu_option` WHERE `MenuID` = %d AND `OptionID` = 1;" % NAT_PAGLE_MENU)
+    w("INSERT INTO `gossip_menu_option` (`MenuID`, `OptionID`, `OptionIcon`, `OptionText`, `OptionBroadcastTextID`, "
+      "`OptionType`, `OptionNpcFlag`, `ActionMenuID`, `ActionPoiID`, `BoxCoded`, `BoxMoney`, `BoxText`, "
+      "`BoxBroadcastTextID`, `VerifiedBuild`) VALUES")
+    w("(%d, 1, 1, 'Let me browse your goods.', 8097, 3, 128, 0, 0, 0, 0, '', 0, 0);" % NAT_PAGLE_MENU)
     w("")
 
     w("-- Nat pays the wallet coins (src/NatPagle.cpp).")

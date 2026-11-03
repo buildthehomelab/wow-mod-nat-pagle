@@ -141,6 +141,7 @@ The client patch rows do no harm left in place.
 | pool_template | 9503700 Azeroth, 9503701 Outland, 9503702 Northrend |
 | faction_dbc / Faction.dbc | 1170 The Anglers, reputation index 107, under 1118 Classic |
 | creature_template | 12919 Nat Pagle (stock) gets ScriptName `npc_nat_pagle`; 15077 Riggle Bassbait (stock) gets `npc_riggle_derby` and the vendor flag |
+| gossip_menu_option | 6445 Nat Pagle (stock) gets option 1, "Let me browse your goods." |
 | spell_dbc / Spell.dbc | 90470 Surfing |
 | itemextendedcost_dbc / ItemExtendedCost.dbc | 90434-90436 the coin prices |
 | npc_text | 9503720 |

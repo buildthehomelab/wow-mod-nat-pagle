@@ -305,6 +305,12 @@ SELECT c.* FROM (
 ) c
 JOIN `npc_vendor` v ON v.`entry` = 12919 AND v.`item` = c.`SourceEntry`;
 
+-- His stock menu has no way to the wares, and its one option keeps the core from falling back on
+-- the default menu's. The client opens a lone vendor option by itself, without the greeting.
+DELETE FROM `gossip_menu_option` WHERE `MenuID` = 6445 AND `OptionID` = 1;
+INSERT INTO `gossip_menu_option` (`MenuID`, `OptionID`, `OptionIcon`, `OptionText`, `OptionBroadcastTextID`, `OptionType`, `OptionNpcFlag`, `ActionMenuID`, `ActionPoiID`, `BoxCoded`, `BoxMoney`, `BoxText`, `BoxBroadcastTextID`, `VerifiedBuild`) VALUES
+(6445, 1, 1, 'Let me browse your goods.', 8097, 3, 128, 0, 0, 0, 0, '', 0, 0);
+
 -- Nat pays the wallet coins (src/NatPagle.cpp).
 UPDATE `creature_template` SET `ScriptName` = 'npc_nat_pagle' WHERE `entry` = 12919;
 

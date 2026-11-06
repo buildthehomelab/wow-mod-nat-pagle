@@ -50,8 +50,10 @@ Fishy, Tiny Goldfish and the Azure Water Strider are items of
 [mod-retail-collection](https://github.com/buildthehomelab/wow-mod-retail-collection) (400449,
 410847, 410652); Nat only sells them when the server has them at the moment this module's SQL
 is applied, so install mod-retail-collection first. Those three and Nat's Lucky Fishing Pole have
-no price: the reputation is what they cost. Items you haven't the rank for don't show. Nat keeps
-his stock Mudskunk Lure.
+no price: the reputation is what they cost. Items you haven't the rank for don't show, so when
+his shop opens Nat lists in chat your Anglers rank and what each higher rank adds, as item links
+(`NatPagle.ShopUnlocks`). A ware that also waits on a progression tier is left out until you have
+the tier. Nat keeps his stock Mudskunk Lure.
 
 ## Account wallet coins
 

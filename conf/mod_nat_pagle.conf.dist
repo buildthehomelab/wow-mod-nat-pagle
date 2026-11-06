@@ -4,7 +4,8 @@
 # mod-nat-pagle
 #
 # Nat Pagle's fishing dailies, The Anglers reputation and the Stranglethorn fishing contest. The
-# quests, the reputation and the wares are world SQL; this file only sets the coins paid.
+# quests, the reputation and the wares are world SQL; this file sets the coins paid and the shop's
+# rank list.
 ########################################
 
 #
@@ -15,6 +16,16 @@
 #
 
 NatPagle.Coins = 1
+
+#
+#    NatPagle.ShopUnlocks
+#        Description: When Nat's shop opens, list in chat the player's Anglers rank and the wares
+#                     each higher rank adds. Wares that also wait on something else, such as a
+#                     progression tier, are left out. 0 lists nothing.
+#        Default:     1
+#
+
+NatPagle.ShopUnlocks = 1
 
 #
 #    NatPagle.Derby.FirstPlaceCoins
